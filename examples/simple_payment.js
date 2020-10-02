@@ -18,13 +18,21 @@ const FEE = 350
 async function makeSimplePayment (from, wif, to, amount) {
   try {
     const utxo = await bchjs.Ext.findPaymentUtxo(from)
-    const txBuilder = new bchjs.TXBuilder(bchjs)
     const remainder = utxo.value - amount - FEE
-    txBuilder.addOutput(to, amount)
-    txBuilder.addOutput(from, remainder)
-    await txBuilder.addPaymentInput(from, wif, utxo)
-    const hex = await txBuilder.sendTx()
-    console.log(`result: ${JSON.stringify(hex, null, 2)}`)
+
+    const txBuilder = new bchjs.TXBuilder(bchjs)
+
+    const outputs = [
+      { out: to, value: amount }, // OUT#0 payment
+      { out: from, value: remainder } // OUT#1 remainder
+    ]
+    txBuilder.addOutputs(outputs)
+
+    const inputs = [{ utxo: utxo }] // IN#0 pay
+    txBuilder.addSignedInputs(wif, inputs)
+
+    const txid = await txBuilder.sendTx(true)
+    console.log(`txid: ${JSON.stringify(txid, null, 2)}`)
   } catch (error) {
     console.error('error in makeSimplePayment: ', error)
   }
