@@ -1,0 +1,35 @@
+{
+  "name": "bch-js-ext",
+  "version": "0.1.0",
+  "description": "Extensions to @psf/bch-js library",
+  "main": "src/bch-js-ext.js",
+  "files": [
+    "src",
+    "examples"
+  ],
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zh/bch-js-ext.git"
+  },
+  "keywords": [
+    "bch",
+    "bch-js",
+    "bitcoincash"
+  ],
+  "author": "Stoyan Zhekov <zh@zhware.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zh/bch-js-ext/issues"
+  },
+  "homepage": "https://github.com/zh/bch-js-ext#readme",
+  "dependencies": {
+    "@psf/bch-js": "^3.5.5",
+    "axios": "^0.20.0"
+  },
+  "devDependencies": {
+    "mocha": "^8.1.3"
+  }
+}

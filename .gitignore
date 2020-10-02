@@ -1,0 +1,10 @@
+node_modules/*
+.nyc_output/*
+
+docs/
+coverage/
+examples/test.js
+examples/*.json
+
+# This paragraph comes last. Force includes specific files.
+!docs/README.md
