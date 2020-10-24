@@ -1,7 +1,6 @@
 const axios = require('axios')
 
 const DUST = 546
-const TX_FEE = 350 // is it right?
 
 class NFT {
   constructor (config) {
@@ -11,6 +10,7 @@ class NFT {
 
     this.slpdbURL = tmp.slpdbURL
     this.bchjs = config.bchjs
+    this.txFee = config.txFee || 450
 
     this.Types = {
       BATON: { utxoType: 'minting-baton', tokenType: 129 }, // mint baton
@@ -42,7 +42,7 @@ class NFT {
         initialQty: 1
       }
       const paymentUtxo = await this.bchjs.Ext.findPaymentUtxo(account.address)
-      const remainder = paymentUtxo.value - (2 * DUST) - TX_FEE
+      const remainder = paymentUtxo.value - (2 * DUST) - this.txFee
 
       const txBuilder = new this.bchjs.TXBuilder(this.bchjs)
       const script = this.bchjs.SLP.NFT1.newNFTGroupOpReturn(mintConfig)
@@ -88,7 +88,7 @@ class NFT {
         documentUrl: docURL
       }
       const paymentUtxo = await this.bchjs.Ext.findPaymentUtxo(account.address)
-      const remainder = paymentUtxo.value - DUST - TX_FEE
+      const remainder = paymentUtxo.value - DUST - this.txFee
 
       const txBuilder = new this.bchjs.TXBuilder(this.bchjs)
       const script = this.bchjs.SLP.NFT1.generateNFTChildGenesisOpReturn(mintConfig)
@@ -129,7 +129,7 @@ class NFT {
         throw new Error('No token UTXOs with the specified Id could be found.')
       }
       const paymentUtxo = await this.bchjs.Ext.findPaymentUtxo(account.address)
-      const remainder = paymentUtxo.value - DUST - TX_FEE
+      const remainder = paymentUtxo.value - DUST - this.txFee
 
       const txBuilder = new this.bchjs.TXBuilder(this.bchjs)
       const slpSendObj = this.bchjs.SLP.NFT1.generateNFTChildSendOpReturn(tokenUtxos, 1)
@@ -170,7 +170,7 @@ class NFT {
         throw new Error('No token UTXOs with the specified Id could be found.')
       }
       const paymentUtxo = await this.bchjs.Ext.findPaymentUtxo(account.address)
-      const remainder = paymentUtxo.value - DUST - TX_FEE
+      const remainder = paymentUtxo.value - DUST - this.txFee
 
       const txBuilder = new this.bchjs.TXBuilder(this.bchjs)
       const slpData = this.bchjs.SLP.TokenType1.generateBurnOpReturn(tokenUtxos, 1)
@@ -201,7 +201,7 @@ class NFT {
         throw new Error('No token UTXOs with the specified ID could be found.')
       }
       const paymentUtxo = await this.bchjs.Ext.findPaymentUtxo(account.address)
-      const remainder = paymentUtxo.value - (2 * DUST) - TX_FEE
+      const remainder = paymentUtxo.value - (2 * DUST) - this.txFee
 
       const txBuilder = new this.bchjs.TXBuilder(this.bchjs)
       const script = this.bchjs.SLP.NFT1.mintNFTGroupOpReturn(tokenUtxos, 1)
@@ -387,7 +387,6 @@ class NFT {
       console.error('Error in tokenBurnHistory: ', error)
       throw error
     }
-
   }
 }
 
