@@ -38,10 +38,31 @@ These methods are used also in the other modules.
   * **address**: *String*. example: `'bitcoincash:eedddd...' or 'simpleledger:....'`
   * **return**: *true/false*
 
+* `calculateFee(numInputs, numOutputs, satsPerByte)` - miner fee to pay for the transaction
+  * **numInputs**: *Integer*
+  * **numOutputs**: *Integer*
+  * **satsPerByte**: *Float*
+
+* `combineUtxos(outputs, utxos, amount, satsPerByte` - combine several UTXOs to pay for the transaction
+  * **outputs** - *Array* in format `[{out: 'bitcoincash:...', value: 1000}, ...]`
+  * **utxos** - *Array* of UTXOs (for result from `bchjs.Electrumx.utxo(address)`)
+  * **amount** - *Satoshi* (optional) Use this amount instead of combining outputs values
+  * **satsPerByte** - *Float* (optional) cost per byte in satoshis (*default: 1.1*)
+
+```js
+ const outputs = [
+   { out: 'bitcoincash:dsffff...', value: 1000 },
+   { out: 'bitcoincash:dsffee...', value: 2000 }
+ ]
+ const data = await bchjs.Electrumx.utxo('bitcoincash:dsffff...')
+ const utxos = data.utxos
+ const { paymentUtxos, remainder } = await bchjs.Ext.combineUtxos(outputs, utxos)
+```
+
 * `findBiggestUtxo(utxos)` - find UTXO with biggest value in an Array of UTXOs
   * **utxos**: *Array* of UTXO objects
   * **return**: *UTXO object*
- 
+
 ```js
  const data = await bchjs.Electrumx.utxo('bitcoincash:dsffff...')
  const utxos = data.utxos
@@ -67,7 +88,7 @@ const tokenUtxos = await bchjs.Ext.getUtxoDetails('bitcoincash:dsffff...')
   * `getTokenUtxos(address, tokenId, types = {})`
   * `getTickerUtxos(address, ticker, types = {})`
      * **address**: *String*. example: `'bitcoincash:eedddd...'
-     * **tokenId**: *String*. example: `'b34esadd...'` 
+     * **tokenId**: *String*. example: `'b34esadd...'`
      * **ticker**: *String*. example: `'NFT_TOKEN'`
      * **return**: *Array* of hydrated UTXOs
 
@@ -111,7 +132,7 @@ const inputs = [{ utxo: paymentUtxo }] // IN#0 pay
 txBuilder.addSignedInputs(wif, inputs)
 ```
 
-See NFT examples in the [example directory](./examples/) for more detailed usage information.   
+See NFT examples in the [example directory](./examples/) for more detailed usage information.
 
 ### NFT module
 

@@ -19,6 +19,88 @@ class Ext {
     }
   }
 
+  // Calculate the miner fee that needs to be paid for this transaction.
+  calculateFee (numInputs, numOutputs, satsPerByte) {
+    try {
+      const byteCount = this.bchjs.BitcoinCash.getByteCount(
+        { P2PKH: numInputs },
+        { P2PKH: numOutputs }
+      )
+
+      const fee = Math.ceil(byteCount * satsPerByte)
+
+      if (isNaN(fee)) {
+        throw new Error('Invalid input. Fee could not be calculated.')
+      }
+
+      return fee
+    } catch (error) {
+      console.error('Error in calculateFee()', error)
+      throw error
+    }
+  }
+
+  // Internal use
+  // Sort the UTXOs by the satoshis they hold.
+  sortUtxosBySize (utxos, sortingOrder = 'ASC') {
+    if (sortingOrder === 'ASC') {
+      return utxos.sort((a, b) => a.value - b.value)
+    } else {
+      return utxos.sort((a, b) => b.value - a.value)
+    }
+  }
+
+  // Uses the smallest UTXOs first, which maximizes the number UTXOs used.
+  // This helps reduce the total number UTXOs in the wallet, which is efficient
+  // for limiting the number of network calls.
+  combineUtxos (outputs, availableUtxos, amount = 0, satsPerByte = 1.1) {
+    try {
+      const sortedUtxos = this.sortUtxosBySize(availableUtxos, 'ASC')
+      console.log(`utxo: ${JSON.stringify(sortedUtxos, null, 2)}`)
+
+      // Calculate the miner fee, excluding inputs (this cost will be added later).
+      // +1 for the remainder
+      const fee = this.calculateFee(0, outputs.length + 1, satsPerByte)
+
+      let satoshisNeeded
+      if (amount > 0) {
+        satoshisNeeded = amount + fee
+      } else {
+        // Calculate the satoshis needed (minus the fee for each input)
+        const satoshisToSend = outputs.reduce(
+          (acc, receiver) => acc + receiver.value,
+          0
+        )
+        satoshisNeeded = satoshisToSend + fee
+      }
+      let satoshisAvailable = 0
+      const necessaryUtxos = []
+
+      // Add each UTXO to the calculation until enough satoshis are found.
+      for (const utxo of sortedUtxos) {
+        // TODO: verify the UTXO is valid.
+        necessaryUtxos.push(utxo)
+        satoshisAvailable += utxo.value
+        // Additional cost per Utxo input is 148 sats for mining fees.
+        satoshisNeeded += 148
+        // Exit the loop once enough UTXOs are found to pay the the TX.
+        if (satoshisAvailable >= satoshisNeeded) break
+      }
+      // console.log(`utxos: ${JSON.stringify(necessaryUtxos, null, 2)}`)
+
+      // Calculate the remainder or 'change' to send back to the sender.
+      const remainder = satoshisAvailable - satoshisNeeded
+      // console.log(`remainder: ${remainder}`)
+      if (remainder < 0) {
+        throw new Error(`Insufficient balance: ${satoshisAvailable} (${satoshisNeeded} needed)`)
+      }
+      return { utxos: necessaryUtxos, remainder }
+    } catch (error) {
+      console.error('Error in combineUtxos: ', error)
+      throw error
+    }
+  }
+
   async findBiggestUtxo (utxos) {
     try {
       let largestAmount = 0
@@ -65,6 +147,24 @@ class Ext {
       return utxo
     } catch (error) {
       console.error('Error in findPaymentUtxo: ', error)
+      throw error
+    }
+  }
+
+  async findPaymentUtxos (addr, outputs, amount = 0) {
+    try {
+      let availableUtxos = await this.getUtxoDetails (addr)
+      // console.log(`utxo: ${JSON.stringify(availableUtxos, null, 2)}`)
+      availableUtxos = availableUtxos.filter(function (utxo) {
+        if (utxo.utxoType === undefined) return true
+        return false
+      })
+      if (availableUtxos.length === 0) {
+        throw new Error('No UTXOs to pay for transaction! Exiting.')
+      }
+      return this.combineUtxos(outputs, availableUtxos, amount)
+    } catch (error) {
+      console.error('Error in combineUtxosToPay: ', error)
       throw error
     }
   }

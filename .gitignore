@@ -3,6 +3,7 @@ node_modules/*
 
 docs/
 coverage/
+examples.local/
 examples/test.js
 examples/*.json
 
